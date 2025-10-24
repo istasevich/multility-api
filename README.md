@@ -39,6 +39,9 @@ Generate PDFs, extract text, relay webhooks, convert currencies — all from one
 ## 🧱 Project Structure
 
 ---
+### 🧱 Project Structure
+
+```
 multility-api/
 ├── apps/
 │ ├── core-api/ → Laravel Core (API Gateway)
@@ -51,6 +54,9 @@ multility-api/
 │ └── scripts/ → Deploy & build utilities
 │
 └── docker-compose.yml
+
+```
+
 ---
 
 ## 🔐 Authentication
