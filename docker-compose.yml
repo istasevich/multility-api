@@ -1,0 +1,104 @@
+version: "3.9"
+
+services:
+  # 🧠 Core Laravel API
+  core-api:
+    build:
+      context: ./apps/core-api
+      dockerfile: Dockerfile
+    container_name: multility-core-api
+    restart: unless-stopped
+    env_file:
+      - ./apps/core-api/.env
+    volumes:
+      - ./apps/core-api:/var/www/html
+      - ./shared/storage:/var/www/html/storage
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - multility
+    command: bash -c "php artisan migrate --force && php-fpm"
+
+  # 🐍 Python Worker (FastAPI + Celery)
+  worker:
+    build:
+      context: ./apps/worker
+      dockerfile: Dockerfile
+    container_name: multility-worker
+    restart: unless-stopped
+    env_file:
+      - ./apps/worker/.env
+    depends_on:
+      - redis
+    volumes:
+      - ./apps/worker:/app
+    command: bash -c "celery -A main.celery_app worker --loglevel=info"
+    networks:
+      - multility
+
+  # ⚡ Redis (queue + cache)
+  redis:
+    image: redis:7.2-alpine
+    container_name: multility-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - multility
+
+  # 🗄️ PostgreSQL (main database)
+  postgres:
+    image: postgres:16-alpine
+    container_name: multility-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: multility
+      POSTGRES_USER: multility
+      POSTGRES_PASSWORD: secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - multility-pgdata:/var/lib/postgresql/data
+    networks:
+      - multility
+
+  # 🌐 Nginx (reverse proxy for Laravel + Next.js)
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: multility-nginx
+    restart: unless-stopped
+    depends_on:
+      - core-api
+      - landing
+    volumes:
+      - ./shared/nginx/conf.d:/etc/nginx/conf.d
+      - ./apps/core-api/public:/var/www/html/public
+    ports:
+      - "80:80"
+    networks:
+      - multility
+
+  # 🎨 Next.js Frontend (Landing / Docs)
+  landing:
+    build:
+      context: ./apps/landing
+      dockerfile: Dockerfile
+    container_name: multility-landing
+    restart: unless-stopped
+    env_file:
+      - ./apps/landing/.env
+    volumes:
+      - ./apps/landing:/app
+    command: "npm run start"
+    ports:
+      - "3000:3000"
+    networks:
+      - multility
+
+networks:
+  multility:
+    driver: bridge
+
+volumes:
+  multility-pgdata:
