@@ -1,0 +1,9 @@
+{
+  "name": "multility-landing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo '✅ Multility Landing build complete (stub)'",
+    "start": "echo '🌌 Multility Landing running...' && sleep infinity"
+  }
+}

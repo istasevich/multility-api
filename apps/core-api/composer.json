@@ -1,0 +1,11 @@
+{
+  "name": "multility/api-core",
+  "description": "Stub for Multility Core API (Laravel)",
+  "type": "project",
+  "require": {},
+  "autoload": {
+    "psr-4": {
+      "App\\": "app/"
+    }
+  }
+}
