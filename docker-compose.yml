@@ -17,7 +17,7 @@ services:
       - redis
     networks:
       - multility
-    command: bash -c "php artisan migrate --force && php-fpm"
+    command: php-fpm
 
   # 🐍 Python Worker (FastAPI + Celery)
   worker:
@@ -32,7 +32,7 @@ services:
       - redis
     volumes:
       - ./apps/worker:/app
-    command: bash -c "celery -A main.celery_app worker --loglevel=info"
+    command: bash -c "echo '🐍 Worker running (stub mode)' && uvicorn main:app --host 0.0.0.0 --port 8001"
     networks:
       - multility
 
