@@ -12,6 +12,8 @@ services:
     volumes:
       - ./apps/core-api:/var/www/html
       - ./shared/storage:/var/www/html/storage
+      - ./apps/core-api/src:/var/www/html/src
+      - ./apps/core-api/.env:/var/www/html/src/.env:ro
     depends_on:
       - postgres
       - redis
@@ -72,7 +74,7 @@ services:
       - landing
     volumes:
       - ./shared/nginx/conf.d:/etc/nginx/conf.d
-      - ./apps/core-api/public:/var/www/html/public
+      - ./apps/core-api/src:/var/www/html/src
     ports:
       - "80:80"
     networks:

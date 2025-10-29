@@ -10,7 +10,10 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin --filename=composer
 
-WORKDIR /var/www/html
+RUN pecl install redis \
+    && docker-php-ext-enable redis
+
+WORKDIR /var/www/html/src
 
 # --- копируем проект (если есть локальные файлы) ---
 COPY . .
