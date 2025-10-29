@@ -9,4 +9,6 @@ Route::get('/pi', function () {
     return response()->json(['status' => 'ok', 'app' => 'Multility Core API']);
 });
 
-Route::get('/ping', PingController::class);
+Route::middleware(['auth.apikey'])->group(function () {
+    Route::get('/ping', PingController::class);
+});
