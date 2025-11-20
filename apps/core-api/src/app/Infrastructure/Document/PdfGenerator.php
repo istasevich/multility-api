@@ -43,8 +43,8 @@ final class PdfGenerator implements DocumentGenerator
                 ->setNodeBinary('/usr/bin/node')
                 ->setChromePath('/usr/bin/chromium')
                 ->addChromiumArguments([
-                    '--no-sandbox',
-                    '--disable-dev-shm-usage',
+                    'no-sandbox',
+                    'disable-dev-shm-usage',
                 ])
                 ->format($options['format'] ?? 'A4')
                 ->landscape(($options['orientation'] ?? 'portrait') === 'landscape')

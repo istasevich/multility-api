@@ -15,8 +15,23 @@ final class GeneratePdfFromHtmlUseCase
         // Nothing
     }
 
-    public function execute(string $html, array $options = []): GeneratedDocumentDto
+    public function execute(string $source, array $params = []): GeneratedDocumentDto
     {
-        return $this->generator->generate($html, $options);
+        // Маппим HTTP-параметры в options для генератора
+        $options = [];
+
+        if (! empty($params['format'])) {
+            $options['format'] = $params['format']; // 'A4', 'A3', 'Letter'
+        }
+
+
+        if (! empty($params['orientation'])) {
+            // просто пробрасываем строку, без логики
+            $options['orientation'] = $params['orientation']; // 'portrait' | 'landscape'
+        }
+
+
+        // сюда позже добавим margins, header/footer, и т.д.
+        return $this->generator->generate($source, $options);
     }
 }
