@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Contract;
 
+use App\Domain\Exception\RateNotAvailableException;
 use DateTimeInterface;
 
 /**
@@ -28,7 +29,7 @@ interface RateProvider
      *
      * @return non-empty-string Decimal как строка (без экспоненциальной формы), например "12345.6789"
      *
-     * @throws \App\Domain\Exception\RateNotAvailableException Если курс недоступен у провайдера
+     * @throws RateNotAvailableException Если курс недоступен у провайдера
      */
     public function getRate(string $base, string $quote, ?DateTimeInterface $at = null): string;
 
@@ -41,7 +42,7 @@ interface RateProvider
      *
      * @return array<non-empty-string, non-empty-string> Ассоц. массив: quote => decimal-строка
      *
-     * @throws \App\Domain\Exception\RateNotAvailableException Если хотя бы одна запрошенная котировка недоступна
+     * @throws RateNotAvailableException Если хотя бы одна запрошенная котировка недоступна
      */
     public function getRates(string $base, array $quotes, ?DateTimeInterface $at = null): array;
 

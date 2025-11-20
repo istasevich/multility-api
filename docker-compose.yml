@@ -21,6 +21,26 @@ services:
       - multility
     command: php-fpm
 
+  # ⚙️ PDF Queue Worker (асинхронная генерация PDF)
+  core-api-pdf:
+    build:
+      context: ./apps/core-api
+      dockerfile: Dockerfile
+    container_name: multility-core-api-pdf
+    restart: unless-stopped
+    env_file:
+      - ./apps/core-api/.env
+    volumes:
+      - ./apps/core-api:/var/www/html
+      - ./shared/storage:/var/www/html/storage
+      - ./apps/core-api/src:/var/www/html/src
+      - ./apps/core-api/.env:/var/www/html/src/.env:ro
+    depends_on:
+      - redis
+    networks:
+      - multility
+    command: php artisan queue:work --queue=pdf --tries=2 --timeout=90
+
   # 🐍 Python Worker (FastAPI + Celery)
   worker:
     build:
