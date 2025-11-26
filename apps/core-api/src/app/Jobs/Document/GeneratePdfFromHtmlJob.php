@@ -3,7 +3,8 @@
 namespace App\Jobs\Document;
 
 use App\Application\UseCase\Document\GeneratePdfFromHtmlUseCase;
-use App\Domain\Contract\DocumentJobStatusRepository;
+use App\Domain\Contract\DocumentJobStatusRepositoryInterface;
+use App\Domain\Enums\DocumentJobStatusEnum;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,18 +30,18 @@ final class GeneratePdfFromHtmlJob implements ShouldQueue
      */
     public function handle(
         GeneratePdfFromHtmlUseCase $useCase,
-        DocumentJobStatusRepository $statusRepository,
+        DocumentJobStatusRepositoryInterface $statusRepository,
     ): void {
-        $statusRepository->markProcessing($this->jobId);
+
+        $statusRepository->updateStatus($this->jobId, DocumentJobStatusEnum::Running);
 
         try {
             $document = $useCase->execute($this->source, $this->params);
-            $statusRepository->markCompleted($this->jobId, $document);
+            $statusRepository->markFinished($this->jobId, $document);
         } catch (Throwable $e) {
             $statusRepository->markFailed(
-                id: $this->jobId,
-                error: $e::class,
-                message: $e->getMessage(),
+                jobId: $this->jobId,
+                error: $e,
             );
 
             throw $e;

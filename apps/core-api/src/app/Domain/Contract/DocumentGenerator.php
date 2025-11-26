@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Domain\Contract;
+namespace App\Domain\Contract;
 
 
 use App\Domain\DTO\GeneratedDocumentDto;

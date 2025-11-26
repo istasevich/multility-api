@@ -1,105 +1,98 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Infrastructure\Persistence\Document;
 
-use App\Domain\Contract\DocumentJobStatusRepository;
+use App\Domain\Contract\DocumentJobStatusRepositoryInterface;
 use App\Domain\DTO\DocumentJobStatusDto;
 use App\Domain\DTO\GeneratedDocumentDto;
+use App\Domain\Enums\DocumentJobStatusEnum;
 use Illuminate\Support\Facades\Redis;
 
-final class RedisDocumentJobStatusRepository implements DocumentJobStatusRepository
+final class RedisDocumentJobStatusRepository implements DocumentJobStatusRepositoryInterface
 {
     private const PREFIX = 'document_job:';
-    private const TTL = 86400; // 24 часа
+    private const TTL = 86400; // 24h
 
-    public function createPending(string $id, string $type): void
-    {
-        $key = $this->key($id);
-
-        $this->writeHash($key, [
-            'status'     => 'pending',
-            'type'       => $type,
+    public function create(
+        string $jobId,
+        string $type,
+        DocumentJobStatusEnum $status = DocumentJobStatusEnum::Pending
+    ): void {
+        $this->write($jobId, [
+            'status' => $status->value,
+            'type' => $type,
             'created_at' => now()->toIso8601String(),
         ]);
-
-        Redis::expire($key, self::TTL);
     }
 
-    public function markProcessing(string $id): void
+    public function updateStatus(string $jobId, DocumentJobStatusEnum $status): void
     {
-        $key = $this->key($id);
-
-        $this->writeHash($key, [
-            'status'     => 'processing',
-            'started_at' => now()->toIso8601String(),
+        $this->write($jobId, [
+            'status' => $status->value,
+            'updated_at' => now()->toIso8601String(),
         ]);
-
-        Redis::expire($key, self::TTL);
     }
 
-    public function markCompleted(string $id, GeneratedDocumentDto $document): void
+    public function markFinished(string $jobId, GeneratedDocumentDto $document): void
     {
-        $key = $this->key($id);
-
-        $this->writeHash($key, [
-            'status'      => 'done',
-            'path'        => $document->path,
-            'url'         => $document->url,
-            'mime'        => $document->mime,
-            'size'        => (string) $document->size,
-            'provider'    => $document->provider,
+        $this->write($jobId, [
+            'status' => DocumentJobStatusEnum::Done->value,
+            'path' => $document->path,
+            'url' => $document->url,
+            'mime' => $document->mime,
+            'size' => (string)$document->size,
+            'provider' => $document->provider,
             'finished_at' => now()->toIso8601String(),
         ]);
-
-        Redis::expire($key, self::TTL);
     }
 
-    public function markFailed(string $id, string $error, ?string $message = null): void
+    public function markFailed(string $jobId, \Throwable $error): void
     {
-        $key = $this->key($id);
-
-        $this->writeHash($key, [
-            'status'      => 'failed',
-            'error'       => $error,
-            'message'     => $message,
+        $this->write($jobId, [
+            'status' => DocumentJobStatusEnum::Failed->value,
+            'error' => $error::class,
+            'message' => $error->getMessage(),
             'finished_at' => now()->toIso8601String(),
         ]);
-
-        Redis::expire($key, self::TTL);
     }
 
-    public function get(string $id): ?DocumentJobStatusDto
+    public function get(string $jobId): ?DocumentJobStatusDto
     {
-        $key = $this->key($id);
+        $key = $this->key($jobId);
 
         if (! Redis::exists($key)) {
             return null;
         }
 
-        /** @var array<string, string> $data */
+        /** @var array<string,string> $data */
         $data = Redis::hgetall($key);
 
-        return DocumentJobStatusDto::fromArray($id, $data);
+        return DocumentJobStatusDto::fromArray($jobId, $data);
     }
 
-    private function key(string $id): string
-    {
-        return self::PREFIX.$id;
-    }
+    // ===================================================================================
+    // Internal helpers
+    // ===================================================================================
 
     /**
-     * @param array<string, scalar|null> $data
+     * @param array<string,scalar|null> $data
      */
-    private function writeHash(string $key, array $data): void
+    private function write(string $jobId, array $data): void
     {
+        $key = $this->key($jobId);
+
         foreach ($data as $field => $value) {
             if ($value === null) {
                 continue;
             }
-
-            Redis::hset($key, (string) $field, (string) $value);
+            Redis::hset($key, $field, (string) $value);
         }
+
+        Redis::expire($key, self::TTL);
+    }
+
+    private function key(string $jobId): string
+    {
+        return self::PREFIX . $jobId;
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Providers;
 
 use app\Domain\Contract\DocumentGenerator;
-use App\Domain\Contract\DocumentJobStatusRepository;
 
+use App\Domain\Contract\DocumentJobStatusRepositoryInterface;
 use App\Domain\Contract\RateProvider;
 use App\Infrastructure\Document\PdfGenerator;
 use App\Infrastructure\Persistence\Document\RedisDocumentJobStatusRepository;
@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(RateProvider::class, CryptoRateProvider::class);
 
-        $this->app->singleton(DocumentJobStatusRepository::class, function (): RedisDocumentJobStatusRepository {
+        $this->app->singleton(DocumentJobStatusRepositoryInterface::class, function (): RedisDocumentJobStatusRepository {
             return new RedisDocumentJobStatusRepository();
         });
 
